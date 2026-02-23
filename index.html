@@ -1,105 +1,111 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
-<title>GrossDump - By Dixit</title>
+<title>Dixit Labs</title>
 
 <style>
 
 body{
 
 margin:0;
-overflow:hidden;
-background:#050505;
 font-family:Arial;
+background:#020617;
 color:white;
-
-}
-
-#game{
-
-width:100vw;
-height:100vh;
-position:relative;
-
-}
-
-#bin{
-
-position:absolute;
-bottom:20px;
-left:50%;
-transform:translateX(-50%);
-font-size:75px;
-
-}
-
-.trash{
-
-position:absolute;
-font-size:45px;
-
-}
-
-#score{
-
-position:absolute;
-top:10px;
-left:15px;
-font-size:26px;
-color:#00ffcc;
-text-shadow:0 0 15px #00ffcc;
-
-}
-
-#combo{
-
-position:absolute;
-top:45px;
-left:15px;
-color:orange;
-font-size:22px;
-
-}
-
-#gameover{
-
-display:none;
-position:absolute;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:#000d;
-padding:30px;
-border-radius:15px;
 text-align:center;
+
+}
+
+header{
+
+padding:40px;
+background:black;
+
+}
+
+.logo{
+
+font-size:45px;
+font-weight:bold;
+color:#38bdf8;
+
+animation:glow 2s infinite alternate;
+
+}
+
+@keyframes glow{
+
+from{ text-shadow:0 0 10px #38bdf8;}
+to{ text-shadow:0 0 25px #22d3ee;}
+
+}
+
+.tag{
+
+opacity:.7;
+
+}
+
+.projects{
+
+display:flex;
+
+justify-content:center;
+
+flex-wrap:wrap;
+
+gap:30px;
+
+padding:40px;
+
+}
+
+.card{
+
+background:#111827;
+
+padding:20px;
+
+border-radius:15px;
+
+width:260px;
+
+transition:.3s;
+
+box-shadow:0 0 10px rgba(0,0,0,.5);
+
+}
+
+.card:hover{
+
+transform:translateY(-10px);
+
+box-shadow:0 0 25px #38bdf8;
 
 }
 
 button{
 
-padding:10px 20px;
+background:#22c55e;
+
 border:none;
-background:#00ffcc;
-cursor:pointer;
-font-size:18px;
+
+padding:12px 15px;
+
 border-radius:10px;
 
-}
+cursor:pointer;
 
-.shake{
-
-animation:shake .3s;
+font-weight:bold;
 
 }
 
-@keyframes shake{
+footer{
 
-0%{transform:translate(0,0);}
-25%{transform:translate(6px,-6px);}
-50%{transform:translate(-6px,6px);}
-75%{transform:translate(6px,6px);}
-100%{transform:translate(0,0);}
+opacity:.5;
+
+padding:20px;
 
 }
 
@@ -107,201 +113,57 @@ animation:shake .3s;
 
 </head>
 
+
 <body>
 
-<div id="game">
+<header>
 
-<div id="score">Score : 0</div>
+<div class="logo">
 
-<div id="combo"></div>
+DIXIT LABS 🚀
 
-<div id="bin">🗑️</div>
+</div>
 
-<div id="gameover">
+<p class="tag">
 
-<h2>Game Over 💀</h2>
+Interactive experiments by Atharv Dixit
 
-<p id="finalscore"></p>
+</p>
 
-<button onclick="restart()">Restart</button>
+</header>
 
-<button onclick="home()">Home</button>
+
+<h2>Projects</h2>
+
+<div class="projects">
+
+<div class="card">
+
+<h3>GrossDumpster 🗑️</h3>
+
+<p>
+
+Catch trash before it hits the ground!
+
+</p>
+
+<button onclick="window.location.href='https://grossdumpster.vercel.app'">
+
+PLAY NOW
+
+</button>
 
 </div>
 
 </div>
 
-<audio id="catchSound">
 
-<source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_9c65a6.mp3">
+<footer>
 
-</audio>
+© Dixit Labs
 
-<audio id="missSound">
-
-<source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_9f8c43.mp3">
-
-</audio>
-
-<script>
-
-let game=document.getElementById("game");
-
-let bin=document.getElementById("bin");
-
-let score=0;
-
-let combo=0;
-
-let speed=3;
-
-let playing=true;
-
-let binX=window.innerWidth/2;
-
-document.addEventListener("mousemove",e=>{
-
-binX=e.clientX;
-
-bin.style.left=binX+"px";
-
-});
-
-document.addEventListener("touchmove",e=>{
-
-binX=e.touches[0].clientX;
-
-bin.style.left=binX+"px";
-
-});
-
-function spawnTrash(){
-
-if(!playing)return;
-
-let trash=document.createElement("div");
-
-trash.className="trash";
-
-let emojis=["🍌","🧻","🥤","🍕","🗞️","🍔","🧃"];
-
-trash.innerText=
-
-emojis[Math.floor(Math.random()*emojis.length)];
-
-trash.style.left=
-
-Math.random()*window.innerWidth+"px";
-
-game.appendChild(trash);
-
-let y=0;
-
-let fall=setInterval(()=>{
-
-y+=speed;
-
-trash.style.top=y+"px";
-
-let binRect=bin.getBoundingClientRect();
-
-let trashRect=trash.getBoundingClientRect();
-
-if(
-
-trashRect.bottom>=binRect.top &&
-
-trashRect.left<binRect.right &&
-
-trashRect.right>binRect.left
-
-){
-
-combo++;
-
-score+=combo;
-
-document.getElementById("score")
-
-.innerText="Score : "+score;
-
-document.getElementById("combo")
-
-.innerText="Combo x"+combo+" 🔥";
-
-document.getElementById("catchSound").play();
-
-trash.remove();
-
-clearInterval(fall);
-
-speed+=0.12;
-
-}
-
-if(y>window.innerHeight){
-
-combo=0;
-
-document.getElementById("combo").innerText="";
-
-document.getElementById("missSound").play();
-
-screenShake();
-
-trash.remove();
-
-clearInterval(fall);
-
-gameOver();
-
-}
-
-},20);
-
-}
-
-function screenShake(){
-
-document.body.classList.add("shake");
-
-setTimeout(()=>{
-
-document.body.classList.remove("shake");
-
-},300);
-
-}
-
-function gameOver(){
-
-playing=false;
-
-document.getElementById("finalscore")
-
-.innerText="Final Score-You Poop : "+score;
-
-document.getElementById("gameover")
-
-.style.display="block";
-
-}
-
-function restart(){
-
-location.reload();
-
-}
-
-function home(){
-
-window.location="index.html";
-
-}
-
-setInterval(spawnTrash,1000);
-
-</script>
+</footer>
 
 </body>
+
 </html>
