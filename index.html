@@ -2,35 +2,17 @@
 <html>
 <head>
 
-<title>GrossDump.ai — Catch The Trash</title>
+<title>GrossDump - By Dixit</title>
 
 <style>
 
 body{
+
 margin:0;
 overflow:hidden;
-background:linear-gradient(#000,#111);
+background:#050505;
 font-family:Arial;
 color:white;
-text-align:center;
-}
-
-#logo{
-
-position:absolute;
-top:40%;
-width:100%;
-font-size:50px;
-font-weight:bold;
-animation:fade 3s forwards;
-z-index:5;
-
-}
-
-@keyframes fade{
-
-0%{opacity:1;}
-100%{opacity:0;visibility:hidden;}
 
 }
 
@@ -48,7 +30,7 @@ position:absolute;
 bottom:20px;
 left:50%;
 transform:translateX(-50%);
-font-size:70px;
+font-size:75px;
 
 }
 
@@ -64,16 +46,19 @@ font-size:45px;
 position:absolute;
 top:10px;
 left:15px;
-font-size:24px;
+font-size:26px;
+color:#00ffcc;
+text-shadow:0 0 15px #00ffcc;
 
 }
 
 #combo{
 
 position:absolute;
-top:40px;
+top:45px;
 left:15px;
 color:orange;
+font-size:22px;
 
 }
 
@@ -84,9 +69,10 @@ position:absolute;
 top:50%;
 left:50%;
 transform:translate(-50%,-50%);
-background:#000c;
+background:#000d;
 padding:30px;
 border-radius:15px;
+text-align:center;
 
 }
 
@@ -94,9 +80,26 @@ button{
 
 padding:10px 20px;
 border:none;
-background:lime;
-font-size:18px;
+background:#00ffcc;
 cursor:pointer;
+font-size:18px;
+border-radius:10px;
+
+}
+
+.shake{
+
+animation:shake .3s;
+
+}
+
+@keyframes shake{
+
+0%{transform:translate(0,0);}
+25%{transform:translate(6px,-6px);}
+50%{transform:translate(-6px,6px);}
+75%{transform:translate(6px,6px);}
+100%{transform:translate(0,0);}
 
 }
 
@@ -106,11 +109,10 @@ cursor:pointer;
 
 <body>
 
-<div id="logo">🗑️ GROSSDUMP.AI 🗑️</div>
-
 <div id="game">
 
 <div id="score">Score : 0</div>
+
 <div id="combo"></div>
 
 <div id="bin">🗑️</div>
@@ -123,22 +125,32 @@ cursor:pointer;
 
 <button onclick="restart()">Restart</button>
 
-</div>
+<button onclick="home()">Home</button>
 
 </div>
 
-<audio id="bgm" loop>
+</div>
 
-<source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8d5f3a.mp3?filename=future-bass-117997.mp3">
+<audio id="catchSound">
+
+<source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_9c65a6.mp3">
+
+</audio>
+
+<audio id="missSound">
+
+<source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_9f8c43.mp3">
 
 </audio>
 
 <script>
 
 let game=document.getElementById("game");
+
 let bin=document.getElementById("bin");
 
 let score=0;
+
 let combo=0;
 
 let speed=3;
@@ -146,13 +158,6 @@ let speed=3;
 let playing=true;
 
 let binX=window.innerWidth/2;
-
-setTimeout(()=>{
-
-document.getElementById("bgm").play();
-
-},3000);
-
 
 document.addEventListener("mousemove",e=>{
 
@@ -178,13 +183,15 @@ let trash=document.createElement("div");
 
 trash.className="trash";
 
-let emojis=["🍌","🧻","🥤","🍕","🗞️","🍔"];
+let emojis=["🍌","🧻","🥤","🍕","🗞️","🍔","🧃"];
 
-trash.innerText=emojis[Math.floor(Math.random()*emojis.length)];
+trash.innerText=
 
-let x=Math.random()*window.innerWidth;
+emojis[Math.floor(Math.random()*emojis.length)];
 
-trash.style.left=x+"px";
+trash.style.left=
+
+Math.random()*window.innerWidth+"px";
 
 game.appendChild(trash);
 
@@ -215,16 +222,20 @@ combo++;
 score+=combo;
 
 document.getElementById("score")
+
 .innerText="Score : "+score;
 
 document.getElementById("combo")
+
 .innerText="Combo x"+combo+" 🔥";
+
+document.getElementById("catchSound").play();
 
 trash.remove();
 
 clearInterval(fall);
 
-speed+=0.15;
+speed+=0.12;
 
 }
 
@@ -232,8 +243,11 @@ if(y>window.innerHeight){
 
 combo=0;
 
-document.getElementById("combo")
-.innerText="";
+document.getElementById("combo").innerText="";
+
+document.getElementById("missSound").play();
+
+screenShake();
 
 trash.remove();
 
@@ -247,14 +261,28 @@ gameOver();
 
 }
 
+function screenShake(){
+
+document.body.classList.add("shake");
+
+setTimeout(()=>{
+
+document.body.classList.remove("shake");
+
+},300);
+
+}
+
 function gameOver(){
 
 playing=false;
 
 document.getElementById("finalscore")
-.innerText="Final Score : "+score;
+
+.innerText="Final Score-You Poop : "+score;
 
 document.getElementById("gameover")
+
 .style.display="block";
 
 }
@@ -265,7 +293,13 @@ location.reload();
 
 }
 
-setInterval(spawnTrash,1100);
+function home(){
+
+window.location="index.html";
+
+}
+
+setInterval(spawnTrash,1000);
 
 </script>
 
