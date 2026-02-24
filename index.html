@@ -22,11 +22,10 @@
             touch-action: none;
         }
 
-        /* --- THE FIX: High Z-Index & Clear Display --- */
         #boot-screen {
             position: fixed; inset: 0; background: radial-gradient(circle, #1e293b, #000);
             display: flex; flex-direction: column; justify-content: center;
-            align-items: center; z-index: 99999;
+            align-items: center; z-index: 9999;
         }
 
         #hud {
@@ -44,18 +43,29 @@
 
         #hearts { color: var(--danger); font-size: 24px; filter: drop-shadow(0 0 5px var(--danger)); }
 
-        #shop-btn {
+        #open-shop-btn {
             position: absolute; top: 20px; right: 20px;
             padding: 12px 20px; background: var(--neon-blue);
             color: #000; border-radius: 8px; cursor: pointer;
             font-weight: 900; z-index: 101; border: none;
         }
 
+        #shop-menu {
+            display: none; position: fixed; inset: 0; 
+            background: rgba(2, 6, 23, 0.95); z-index: 2000;
+            flex-direction: column; align-items: center; justify-content: center; gap: 15px;
+        }
+
+        .shop-item {
+            background: rgba(30, 41, 59, 0.8); padding: 15px 25px;
+            border-radius: 12px; border: 1px solid var(--neon-blue);
+            width: 320px; display: flex; justify-content: space-between; align-items: center;
+        }
+
         #bin {
             position: absolute; bottom: 40px; left: 50%;
             transform: translateX(-50%); font-size: 80px;
-            z-index: 50; pointer-events: none;
-            transition: transform 0.1s;
+            z-index: 50; pointer-events: none; transition: transform 0.1s;
         }
 
         .item { position: absolute; font-size: 50px; z-index: 40; pointer-events: none; }
@@ -69,193 +79,7 @@
             text-align: center; z-index: 1000;
         }
 
-        .shake { animation: shake 0.15s infinite; }
-        @keyframes shake {
-            0% { transform: translateX(-50%) rotate(0deg); }
-            25% { transform: translateX(-52%) rotate(-5deg); }
-            75% { transform: translateX(-48%) rotate(5deg); }
-        }
-
         .btn-main {
-            padding: 20px 40px; background: var(--neon-blue);
+            padding: 15px 30px; background: var(--neon-blue);
             color: #000; font-weight: 900; border-radius: 50px;
-            cursor: pointer; font-family: 'Orbitron'; border: none;
-            box-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
-        }
-    </style>
-</head>
-<body>
-
-<div id="boot-screen">
-    <h1 style="color:var(--neon-blue); letter-spacing:8px; font-size: 3rem; margin-bottom: 30px;">GROSSDUMP.AI</h1>
-    <button class="btn-main" onclick="initGame()">INITIALIZE ENGINE</button>
-</div>
-
-<div id="hud">
-    <div class="stat-box">SCORE: <span id="score">0</span></div>
-    <div class="stat-box">COINS: 💰 <span id="coins">0</span></div>
-    <div id="hearts">❤️❤️❤️</div>
-    <div id="combo-alert" style="color:orange; font-weight:900; text-shadow: 0 0 10px black;"></div>
-</div>
-
-<button id="shop-btn" onclick="buyHeart()">❤️ REPAIR (150💰)</button>
-
-<div id="bin">🗑️</div>
-
-<div id="gameover">
-    <h1 id="death-msg" style="color:var(--neon-pink);">SYSTEM CRITICAL</h1>
-    <p id="final-score" style="font-size:24px;"></p>
-    <button class="btn-main" onclick="location.reload()">RELOAD</button>
-</div>
-
-<script>
-    const sfx = {
-        catch: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
-        poop: new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3'),
-        miss: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
-        buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3')
-    };
-
-    let score = 0, coins = 0, lives = 3, combo = 0, speed = 6;
-    let playing = false, magnetMode = false;
-    let binX = window.innerWidth / 2;
-    const bin = document.getElementById('bin');
-
-    function initGame() {
-        // Unlock Audio
-        Object.values(sfx).forEach(a => { a.play().then(() => a.pause()); });
-        
-        // Remove Overlay
-        document.getElementById('boot-screen').style.display = 'none';
-        
-        playing = true;
-        updateUI();
-        gameLoop();
-    }
-
-    // Input Handlers
-    const handleMove = (e) => {
-        binX = (e.clientX || (e.touches ? e.touches[0].clientX : binX));
-        bin.style.left = binX + 'px';
-    };
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('touchmove', handleMove);
-
-    function buyHeart() {
-        if (coins >= 150) {
-            coins -= 150; lives++;
-            sfx.buy.play();
-            updateUI();
-        }
-    }
-
-    function spawn() {
-        if (!playing) return;
-        
-        const obj = document.createElement('div');
-        const rand = Math.random();
-        
-        let type = 'trash';
-        if (rand < 0.18) type = 'poop';
-        else if (rand > 0.97) type = 'magnet';
-
-        obj.className = 'item ' + (type === 'poop' ? 'poop' : (type === 'magnet' ? 'magnet-glow' : ''));
-        
-        if (type === 'poop') obj.innerText = '💩';
-        else if (type === 'magnet') obj.innerText = '🧲';
-        else obj.innerText = ["🍌", "🧻", "🥤", "🍕", "🍔"][Math.floor(Math.random() * 5)];
-        
-        let x = Math.random() * (window.innerWidth - 60);
-        obj.style.left = x + 'px';
-        obj.style.top = '-100px';
-        document.body.appendChild(obj);
-
-        let y = -100;
-        let fall = setInterval(() => {
-            if (!playing) { clearInterval(fall); obj.remove(); return; }
-
-            // Magnet Logic (Pull items, not poop)
-            if (magnetMode && type !== 'poop') {
-                let currX = parseFloat(obj.style.left);
-                obj.style.left = (currX + (binX - currX) * 0.15) + "px";
-            }
-
-            y += speed;
-            obj.style.top = y + 'px';
-
-            const bRect = bin.getBoundingClientRect();
-            const oRect = obj.getBoundingClientRect();
-
-            // Collision Detection
-            if (oRect.bottom >= bRect.top && oRect.left < bRect.right && oRect.right > bRect.left) {
-                if (type === 'poop') {
-                    sfx.poop.play();
-                    gameOver("CAUGHT TOXIC WASTE 💩");
-                } else if (type === 'magnet') {
-                    sfx.buy.play();
-                    activateMagnet();
-                } else {
-                    sfx.catch.currentTime = 0;
-                    sfx.catch.play();
-                    combo++; score += (10 * combo); coins += 5;
-                    speed += 0.12;
-                    juiceEffect();
-                }
-                clearInterval(fall); obj.remove();
-                updateUI();
-            }
-
-            // Missed Detection
-            if (y > window.innerHeight) {
-                if (type === 'trash') {
-                    lives--;
-                    sfx.miss.play();
-                    combo = 0;
-                    document.body.style.background = "#450a0a";
-                    setTimeout(() => document.body.style.background = "#020617", 100);
-                    if (lives <= 0) gameOver("OUT OF STORAGE SPACE");
-                }
-                clearInterval(fall); obj.remove();
-                updateUI();
-            }
-        }, 16);
-    }
-
-    function activateMagnet() {
-        magnetMode = true;
-        document.getElementById('combo-alert').innerText = "MAGNET ACTIVE! 🧲";
-        bin.style.filter = "drop-shadow(0 0 20px var(--neon-blue))";
-        setTimeout(() => {
-            magnetMode = false;
-            document.getElementById('combo-alert').innerText = "";
-            bin.style.filter = "none";
-        }, 7000);
-    }
-
-    function juiceEffect() {
-        bin.style.transform = "translateX(-50%) scale(1.3) rotate(5deg)";
-        setTimeout(() => bin.style.transform = "translateX(-50%) scale(1) rotate(0deg)", 100);
-    }
-
-    function updateUI() {
-        document.getElementById('score').innerText = score;
-        document.getElementById('coins').innerText = coins;
-        document.getElementById('hearts').innerText = "❤️".repeat(Math.max(0, lives));
-    }
-
-    function gameOver(msg) {
-        playing = false;
-        document.getElementById('death-msg').innerText = msg;
-        document.getElementById('final-score').innerText = "SCORE: " + score;
-        document.getElementById('gameover').style.display = 'block';
-    }
-
-    function gameLoop() {
-        if (!playing) return;
-        spawn();
-        let wait = Math.max(250, 1000 - (score / 40));
-        setTimeout(gameLoop, wait);
-    }
-</script>
-</body>
-</html>
+            cursor
