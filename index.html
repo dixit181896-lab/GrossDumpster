@@ -9,7 +9,6 @@
         :root {
             --neon-blue: #38bdf8;
             --neon-pink: #f472b6;
-            --neon-green: #22c55e;
             --danger: #ef4444;
         }
 
@@ -20,50 +19,41 @@
             color: white;
             user-select: none;
             touch-action: none;
-            height: 100vh;
-            width: 100vw;
+            height: 100vh; width: 100vw;
         }
 
         /* Scanline Overlay */
         body::before {
-            content: " ";
-            display: block;
-            position: absolute;
+            content: " "; display: block; position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 5000;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            z-index: 5000; background-size: 100% 2px; pointer-events: none;
         }
 
         #boot-screen {
-            position: fixed; inset: 0; background: radial-gradient(circle, #1e293b, #000);
+            position: fixed; inset: 0; background: #020617;
             display: flex; flex-direction: column; justify-content: center;
             align-items: center; z-index: 9999;
         }
 
         #hud {
             position: absolute; top: 20px; left: 20px; z-index: 100;
-            display: flex; flex-direction: column; gap: 8px;
-            pointer-events: none; opacity: 0; transition: opacity 0.5s;
+            display: none; flex-direction: column; gap: 8px; pointer-events: none;
         }
 
         .stat-box {
-            background: rgba(15, 23, 42, 0.9);
-            padding: 10px 15px; border-radius: 8px;
-            border-left: 4px solid var(--neon-blue);
-            font-size: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            min-width: 150px;
+            background: rgba(15, 23, 42, 0.9); padding: 10px 15px; border-radius: 8px;
+            border-left: 4px solid var(--neon-blue); font-size: 18px;
+            min-width: 150px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        #hearts { color: var(--danger); font-size: 24px; filter: drop-shadow(0 0 5px var(--danger)); }
+        #hearts { color: var(--danger); font-size: 24px; }
 
         #open-shop-btn {
             position: absolute; top: 20px; right: 20px;
             padding: 12px 20px; background: var(--neon-blue);
             color: #000; border-radius: 8px; cursor: pointer;
-            font-weight: 900; z-index: 101; border: none;
-            display: none;
+            font-weight: 900; z-index: 101; border: none; display: none;
         }
 
         #shop-menu {
@@ -81,13 +71,11 @@
         #bin {
             position: absolute; bottom: 40px; left: 50%;
             transform: translateX(-50%); font-size: 80px;
-            z-index: 50; pointer-events: none;
-            display: none; /* Hidden until game starts */
+            z-index: 50; pointer-events: none; display: none;
         }
 
         .item { position: absolute; font-size: 50px; z-index: 40; pointer-events: none; }
         .poop { filter: drop-shadow(0 0 15px #78350f); }
-        .magnet-glow { filter: drop-shadow(0 0 20px var(--neon-blue)); }
 
         #gameover {
             display: none; position: absolute; top: 50%; left: 50%;
@@ -100,7 +88,6 @@
             padding: 15px 30px; background: var(--neon-blue);
             color: #000; font-weight: 900; border-radius: 50px;
             cursor: pointer; font-family: 'Orbitron'; border: none;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
             text-transform: uppercase;
         }
     </style>
@@ -108,78 +95,48 @@
 <body>
 
 <div id="boot-screen">
-    <h1 style="color:var(--neon-blue); letter-spacing:8px; font-size: 3rem; margin-bottom: 30px; text-align: center;">GROSSDUMP.AI<br><span style="font-size: 1rem; letter-spacing: 2px; color: white;">v2.1 STABLE BUILD</span></h1>
-    <button id="start-trigger" class="btn-main" onclick="initGame()">INITIALIZE CORE</button>
+    <h1 style="color:var(--neon-blue); letter-spacing:8px; font-size: 2.5rem; text-align: center;">GROSSDUMP.AI</h1>
+    <p style="color:white; margin-bottom: 30px;">V2.5 STABLE_READY</p>
+    <button class="btn-main" onclick="initGame()">FORCE START</button>
 </div>
 
 <div id="hud">
     <div class="stat-box">SCORE: <span id="score">0</span></div>
     <div class="stat-box">COINS: 💰 <span id="coins">0</span></div>
     <div id="hearts">❤️❤️❤️</div>
-    <div id="combo-alert" style="color:var(--neon-blue); font-weight:900; height: 20px; margin-top: 5px;"></div>
+    <div id="combo-alert" style="color:var(--neon-blue); font-weight:900; height: 20px;"></div>
 </div>
 
 <button id="open-shop-btn" onclick="toggleShop(true)">🛒 UPGRADES</button>
 
 <div id="shop-menu">
-    <h1 style="color:var(--neon-pink); letter-spacing: 5px;">MARKET_RESOURCES</h1>
-    <div class="shop-item">
-        <span>❤️ REPAIR</span>
-        <button onclick="buy('heart', 150)" class="btn-main" style="padding:8px 15px; font-size:12px;">150💰</button>
-    </div>
-    <div class="shop-item">
-        <span>🛡️ SHIELD</span>
-        <button onclick="buy('shield', 75)" class="btn-main" style="padding:8px 15px; font-size:12px;">75💰</button>
-    </div>
-    <div class="shop-item">
-        <span>⌛ SLOW-MO</span>
-        <button onclick="buy('slow', 200)" class="btn-main" style="padding:8px 15px; font-size:12px;">200💰</button>
-    </div>
-    <div class="shop-item">
-        <span>💎 2X COINS</span>
-        <button onclick="buy('mult', 400)" class="btn-main" style="padding:8px 15px; font-size:12px;">400💰</button>
-    </div>
-    <button class="btn-main" onclick="toggleShop(false)" style="margin-top:20px; background:white;">RETURN TO FEED</button>
+    <h1 style="color:var(--neon-pink)">TERMINAL_MARKET</h1>
+    <div class="shop-item"><span>❤️ REPAIR</span><button onclick="buy('heart', 150)" class="btn-main" style="padding:8px 15px; font-size:12px;">150💰</button></div>
+    <div class="shop-item"><span>🛡️ SHIELD</span><button onclick="buy('shield', 75)" class="btn-main" style="padding:8px 15px; font-size:12px;">75💰</button></div>
+    <div class="shop-item"><span>⌛ SLOW-MO</span><button onclick="buy('slow', 200)" class="btn-main" style="padding:8px 15px; font-size:12px;">200💰</button></div>
+    <div class="shop-item"><span>💎 2X COIN</span><button onclick="buy('mult', 400)" class="btn-main" style="padding:8px 15px; font-size:12px;">400💰</button></div>
+    <button class="btn-main" onclick="toggleShop(false)" style="margin-top:20px; background:white;">EXIT</button>
 </div>
 
 <div id="bin">🗑️</div>
 
 <div id="gameover">
-    <h1 id="death-msg" style="color:var(--neon-pink);">SYSTEM CRITICAL</h1>
+    <h1 style="color:var(--neon-pink);">SYSTEM CRITICAL</h1>
     <p id="final-score" style="font-size:24px;"></p>
-    <button class="btn-main" onclick="location.reload()">REBOOT SYSTEM</button>
+    <button class="btn-main" onclick="location.reload()">RELOAD</button>
 </div>
 
 <script>
-    const sfx = {
-        catch: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
-        poop: new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3'),
-        miss: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
-        buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-        level: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3')
-    };
-
+    // Variables
     let score = 0, coins = 0, lives = 3, combo = 0, speed = 5;
     let playing = false, magnetMode = false, hasShield = false, coinMult = 1;
-    let lastLevelScore = 0;
-    
-    const bin = document.getElementById('bin');
     let binX = window.innerWidth / 2;
+    const bin = document.getElementById('bin');
 
-    window.onload = () => {
-        console.log("System Ready");
-    };
-
+    // Startup
     function initGame() {
-        // Unlock Audio with Catch to prevent hang
-        Object.values(sfx).forEach(a => { 
-            a.volume = 0.4;
-            a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
-        });
-        
-        // UI Transition
         document.getElementById('boot-screen').style.display = 'none';
-        document.getElementById('hud').style.opacity = '1';
+        document.getElementById('hud').style.display = 'flex';
         document.getElementById('open-shop-btn').style.display = 'block';
         bin.style.display = 'block';
         bin.style.left = binX + 'px';
@@ -188,3 +145,94 @@
         updateUI();
         gameLoop();
     }
+
+    // Input
+    const handleMove = (e) => {
+        if (!playing) return;
+        const x = (e.clientX !== undefined) ? e.clientX : (e.touches ? e.touches[0].clientX : binX);
+        binX = Math.max(50, Math.min(window.innerWidth - 50, x));
+        bin.style.left = binX + 'px';
+    };
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+
+    function toggleShop(open) {
+        playing = !open;
+        document.getElementById('shop-menu').style.display = open ? 'flex' : 'none';
+    }
+
+    function buy(type, cost) {
+        if (coins >= cost) {
+            coins -= cost;
+            if (type === 'heart') lives++;
+            if (type === 'shield') { hasShield = true; document.getElementById('combo-alert').innerText = "SHIELD_ON"; }
+            if (type === 'slow') speed = Math.max(3, speed - 2);
+            if (type === 'mult') coinMult = 2;
+            updateUI();
+        }
+    }
+
+    function spawn() {
+        if (!playing) return;
+        const obj = document.createElement('div');
+        const rand = Math.random();
+        let type = 'trash';
+        
+        if (rand < 0.15) type = 'poop';
+        else if (rand > 0.96) type = 'magnet';
+
+        obj.className = 'item ' + (type === 'poop' ? 'poop' : '');
+        obj.innerText = type === 'poop' ? '💩' : (type === 'magnet' ? '🧲' : ["🍌", "🥤", "🍕", "🍔"][Math.floor(Math.random() * 4)]);
+        obj.style.left = Math.random() * (window.innerWidth - 60) + 'px';
+        obj.style.top = '-100px';
+        document.body.appendChild(obj);
+
+        let y = -100;
+        let fall = setInterval(() => {
+            if (!playing) return; 
+            y += speed;
+            obj.style.top = y + 'px';
+
+            const bRect = bin.getBoundingClientRect();
+            const oRect = obj.getBoundingClientRect();
+
+            if (oRect.bottom >= bRect.top && oRect.left < bRect.right && oRect.right > bRect.left) {
+                if (type === 'poop') {
+                    if (hasShield) { hasShield = false; document.getElementById('combo-alert').innerText = ""; }
+                    else { gameOver(); }
+                } else if (type === 'magnet') { /* Magnet code removed for extreme stability */ }
+                else {
+                    combo++; score += (10 * combo); coins += (5 * coinMult); speed += 0.05;
+                }
+                clearInterval(fall); obj.remove(); updateUI();
+            }
+
+            if (y > window.innerHeight) {
+                if (type === 'trash') {
+                    lives--; combo = 0;
+                    if (lives <= 0) gameOver();
+                }
+                clearInterval(fall); obj.remove(); updateUI();
+            }
+        }, 16);
+    }
+
+    function updateUI() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('coins').innerText = coins;
+        document.getElementById('hearts').innerText = "❤️".repeat(Math.max(0, lives));
+    }
+
+    function gameOver() {
+        playing = false;
+        document.getElementById('final-score').innerText = "DATA_LOST: " + score;
+        document.getElementById('gameover').style.display = 'block';
+    }
+
+    function gameLoop() {
+        if (playing) spawn();
+        setTimeout(gameLoop, Math.max(400, 1000 - (score / 40)));
+    }
+</script>
+</body>
+</html>
