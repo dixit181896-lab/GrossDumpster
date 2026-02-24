@@ -20,6 +20,20 @@
             color: white;
             user-select: none;
             touch-action: none;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Scanline Overlay for Visual Tweak */
+        body::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 5000;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
         }
 
         #boot-screen {
@@ -39,6 +53,7 @@
             padding: 10px 15px; border-radius: 8px;
             border-left: 4px solid var(--neon-blue);
             font-size: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            min-width: 150px;
         }
 
         #hearts { color: var(--danger); font-size: 24px; filter: drop-shadow(0 0 5px var(--danger)); }
@@ -52,7 +67,7 @@
 
         #shop-menu {
             display: none; position: fixed; inset: 0; 
-            background: rgba(2, 6, 23, 0.95); z-index: 2000;
+            background: rgba(2, 6, 23, 0.98); z-index: 2000;
             flex-direction: column; align-items: center; justify-content: center; gap: 15px;
         }
 
@@ -66,6 +81,7 @@
             position: absolute; bottom: 40px; left: 50%;
             transform: translateX(-50%); font-size: 80px;
             z-index: 50; pointer-events: none; transition: transform 0.1s;
+            display: block;
         }
 
         .item { position: absolute; font-size: 50px; z-index: 40; pointer-events: none; }
@@ -76,10 +92,146 @@
             display: none; position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%); background: rgba(0,0,0,0.95);
             padding: 50px; border-radius: 20px; border: 2px solid var(--neon-pink);
-            text-align: center; z-index: 1000;
+            text-align: center; z-index: 6000;
         }
 
         .btn-main {
             padding: 15px 30px; background: var(--neon-blue);
             color: #000; font-weight: 900; border-radius: 50px;
-            cursor
+            cursor: pointer; font-family: 'Orbitron'; border: none;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+            text-transform: uppercase;
+        }
+
+        @keyframes levelUpFlash {
+            0% { background: #020617; }
+            50% { background: #1e3a8a; }
+            100% { background: #020617; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="boot-screen">
+    <h1 style="color:var(--neon-blue); letter-spacing:8px; font-size: 3rem; margin-bottom: 30px; text-align: center;">GROSSDUMP.AI<br><span style="font-size: 1rem; letter-spacing: 2px; color: white;">v2.0 PRO TERMINAL</span></h1>
+    <button class="btn-main" onclick="initGame()">INITIALIZE CORE</button>
+</div>
+
+<div id="hud">
+    <div class="stat-box">SCORE: <span id="score">0</span></div>
+    <div class="stat-box">COINS: 💰 <span id="coins">0</span></div>
+    <div id="hearts">❤️❤️❤️</div>
+    <div id="combo-alert" style="color:var(--neon-blue); font-weight:900; height: 20px;"></div>
+</div>
+
+<button id="open-shop-btn" onclick="toggleShop(true)">🛒 UPGRADES</button>
+
+<div id="shop-menu">
+    <h1 style="color:var(--neon-pink); letter-spacing: 5px;">MARKET_RESOURCES</h1>
+    <div class="shop-item">
+        <span>❤️ REPAIR</span>
+        <button onclick="buy('heart', 150)" class="btn-main" style="padding:8px 15px; font-size:12px;">150💰</button>
+    </div>
+    <div class="shop-item">
+        <span>🛡️ SHIELD</span>
+        <button onclick="buy('shield', 75)" class="btn-main" style="padding:8px 15px; font-size:12px;">75💰</button>
+    </div>
+    <div class="shop-item">
+        <span>⌛ SLOW-MO</span>
+        <button onclick="buy('slow', 200)" class="btn-main" style="padding:8px 15px; font-size:12px;">200💰</button>
+    </div>
+    <div class="shop-item">
+        <span>💎 2X COINS</span>
+        <button onclick="buy('mult', 400)" class="btn-main" style="padding:8px 15px; font-size:12px;">400💰</button>
+    </div>
+    <button class="btn-main" onclick="toggleShop(false)" style="margin-top:20px; background:white;">RETURN TO FEED</button>
+</div>
+
+<div id="bin">🗑️</div>
+
+<div id="gameover">
+    <h1 id="death-msg" style="color:var(--neon-pink);">SYSTEM CRITICAL</h1>
+    <p id="final-score" style="font-size:24px;"></p>
+    <button class="btn-main" onclick="location.reload()">REBOOT SYSTEM</button>
+</div>
+
+<script>
+    // Audio Context
+    const sfx = {
+        catch: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
+        poop: new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3'),
+        miss: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'),
+        buy: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
+        level: new Audio('https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3')
+    };
+
+    let score = 0, coins = 0, lives = 3, combo = 0, speed = 5;
+    let playing = false, magnetMode = false, hasShield = false, coinMult = 1;
+    let lastLevelScore = 0;
+    
+    const bin = document.getElementById('bin');
+    let binX = window.innerWidth / 2;
+
+    function initGame() {
+        // Essential: Play sounds on interaction to unlock audio
+        Object.values(sfx).forEach(a => { 
+            a.volume = 0.4;
+            a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(e => console.log("Audio ready"));
+        });
+        
+        document.getElementById('boot-screen').style.display = 'none';
+        bin.style.left = binX + 'px';
+        playing = true;
+        updateUI();
+        gameLoop();
+    }
+
+    // Input Controller
+    const handleMove = (e) => {
+        if (!playing) return;
+        const clientX = e.clientX || (e.touches ? e.touches[0].clientX : binX);
+        binX = Math.max(50, Math.min(window.innerWidth - 50, clientX));
+        bin.style.left = binX + 'px';
+    };
+    
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('touchmove', handleMove);
+
+    function toggleShop(open) {
+        if (!playing && !open) playing = true;
+        else playing = false;
+        document.getElementById('shop-menu').style.display = open ? 'flex' : 'none';
+    }
+
+    function buy(type, cost) {
+        if (coins >= cost) {
+            coins -= cost;
+            sfx.buy.play();
+            if (type === 'heart') lives++;
+            if (type === 'shield') {
+                hasShield = true;
+                document.getElementById('combo-alert').innerText = "SHIELD_ACTIVE";
+            }
+            if (type === 'slow') speed = Math.max(3, speed - 2);
+            if (type === 'mult') coinMult = 2;
+            updateUI();
+        }
+    }
+
+    function spawn() {
+        if (!playing) return;
+        
+        const obj = document.createElement('div');
+        const rand = Math.random();
+        let type = 'trash';
+        
+        if (rand < 0.15) type = 'poop';
+        else if (rand > 0.96) type = 'magnet';
+
+        obj.className = 'item ' + (type === 'poop' ? 'poop' : (type === 'magnet' ? 'magnet-glow' : ''));
+        
+        if (type === 'poop') obj.innerText = '💩';
+        else if (type === 'magnet') obj.innerText = '🧲';
+        else obj.innerText = ["🍌", "🧻", "🥤", "🍕", "🍔", "🍺", "🍦"][Math.floor(Math.random() * 7)];
+        
+        obj.style.left = Math.random() * (window.innerWidth - 60) + 'px';
