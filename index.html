@@ -24,13 +24,13 @@
             width: 100vw;
         }
 
-        /* Scanline Overlay for Visual Tweak */
+        /* Scanline Overlay */
         body::before {
             content: " ";
             display: block;
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
             z-index: 5000;
             background-size: 100% 2px, 3px 100%;
             pointer-events: none;
@@ -45,7 +45,7 @@
         #hud {
             position: absolute; top: 20px; left: 20px; z-index: 100;
             display: flex; flex-direction: column; gap: 8px;
-            pointer-events: none;
+            pointer-events: none; opacity: 0; transition: opacity 0.5s;
         }
 
         .stat-box {
@@ -63,6 +63,7 @@
             padding: 12px 20px; background: var(--neon-blue);
             color: #000; border-radius: 8px; cursor: pointer;
             font-weight: 900; z-index: 101; border: none;
+            display: none;
         }
 
         #shop-menu {
@@ -80,8 +81,8 @@
         #bin {
             position: absolute; bottom: 40px; left: 50%;
             transform: translateX(-50%); font-size: 80px;
-            z-index: 50; pointer-events: none; transition: transform 0.1s;
-            display: block;
+            z-index: 50; pointer-events: none;
+            display: none; /* Hidden until game starts */
         }
 
         .item { position: absolute; font-size: 50px; z-index: 40; pointer-events: none; }
@@ -102,26 +103,20 @@
             box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
             text-transform: uppercase;
         }
-
-        @keyframes levelUpFlash {
-            0% { background: #020617; }
-            50% { background: #1e3a8a; }
-            100% { background: #020617; }
-        }
     </style>
 </head>
 <body>
 
 <div id="boot-screen">
-    <h1 style="color:var(--neon-blue); letter-spacing:8px; font-size: 3rem; margin-bottom: 30px; text-align: center;">GROSSDUMP.AI<br><span style="font-size: 1rem; letter-spacing: 2px; color: white;">v2.0 PRO TERMINAL</span></h1>
-    <button class="btn-main" onclick="initGame()">INITIALIZE CORE</button>
+    <h1 style="color:var(--neon-blue); letter-spacing:8px; font-size: 3rem; margin-bottom: 30px; text-align: center;">GROSSDUMP.AI<br><span style="font-size: 1rem; letter-spacing: 2px; color: white;">v2.1 STABLE BUILD</span></h1>
+    <button id="start-trigger" class="btn-main" onclick="initGame()">INITIALIZE CORE</button>
 </div>
 
 <div id="hud">
     <div class="stat-box">SCORE: <span id="score">0</span></div>
     <div class="stat-box">COINS: 💰 <span id="coins">0</span></div>
     <div id="hearts">❤️❤️❤️</div>
-    <div id="combo-alert" style="color:var(--neon-blue); font-weight:900; height: 20px;"></div>
+    <div id="combo-alert" style="color:var(--neon-blue); font-weight:900; height: 20px; margin-top: 5px;"></div>
 </div>
 
 <button id="open-shop-btn" onclick="toggleShop(true)">🛒 UPGRADES</button>
@@ -156,7 +151,6 @@
 </div>
 
 <script>
-    // Audio Context
     const sfx = {
         catch: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
         poop: new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3'),
@@ -172,66 +166,25 @@
     const bin = document.getElementById('bin');
     let binX = window.innerWidth / 2;
 
+    window.onload = () => {
+        console.log("System Ready");
+    };
+
     function initGame() {
-        // Essential: Play sounds on interaction to unlock audio
+        // Unlock Audio with Catch to prevent hang
         Object.values(sfx).forEach(a => { 
             a.volume = 0.4;
-            a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(e => console.log("Audio ready"));
+            a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
         });
         
+        // UI Transition
         document.getElementById('boot-screen').style.display = 'none';
+        document.getElementById('hud').style.opacity = '1';
+        document.getElementById('open-shop-btn').style.display = 'block';
+        bin.style.display = 'block';
         bin.style.left = binX + 'px';
+        
         playing = true;
         updateUI();
         gameLoop();
     }
-
-    // Input Controller
-    const handleMove = (e) => {
-        if (!playing) return;
-        const clientX = e.clientX || (e.touches ? e.touches[0].clientX : binX);
-        binX = Math.max(50, Math.min(window.innerWidth - 50, clientX));
-        bin.style.left = binX + 'px';
-    };
-    
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('touchmove', handleMove);
-
-    function toggleShop(open) {
-        if (!playing && !open) playing = true;
-        else playing = false;
-        document.getElementById('shop-menu').style.display = open ? 'flex' : 'none';
-    }
-
-    function buy(type, cost) {
-        if (coins >= cost) {
-            coins -= cost;
-            sfx.buy.play();
-            if (type === 'heart') lives++;
-            if (type === 'shield') {
-                hasShield = true;
-                document.getElementById('combo-alert').innerText = "SHIELD_ACTIVE";
-            }
-            if (type === 'slow') speed = Math.max(3, speed - 2);
-            if (type === 'mult') coinMult = 2;
-            updateUI();
-        }
-    }
-
-    function spawn() {
-        if (!playing) return;
-        
-        const obj = document.createElement('div');
-        const rand = Math.random();
-        let type = 'trash';
-        
-        if (rand < 0.15) type = 'poop';
-        else if (rand > 0.96) type = 'magnet';
-
-        obj.className = 'item ' + (type === 'poop' ? 'poop' : (type === 'magnet' ? 'magnet-glow' : ''));
-        
-        if (type === 'poop') obj.innerText = '💩';
-        else if (type === 'magnet') obj.innerText = '🧲';
-        else obj.innerText = ["🍌", "🧻", "🥤", "🍕", "🍔", "🍺", "🍦"][Math.floor(Math.random() * 7)];
-        
-        obj.style.left = Math.random() * (window.innerWidth - 60) + 'px';
